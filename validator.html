@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE null>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -109,7 +109,22 @@
         <div id="register-form-container" class="form-container hidden" data-form-type="register">
             <h2 class="text-xl font-semibold text-gray-700 mb-4 text-center">Create Account</h2>
             <form id="register-form" novalidate>
-
+                
+                <!-- Full Name Field (NEW) -->
+                <div class="mb-4">
+                    <label for="register-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input 
+                        type="text" 
+                        id="register-name" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                        placeholder="John Doe"
+                        required
+                        aria-describedby="register-name-error"
+                        oninput="handleRegisterInput()"
+                    >
+                    <p id="register-name-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Name must be at least 2 letters and contain only letters and spaces.</p>
+                </div>
+                
                 <!-- Email Field (Register) -->
                 <div class="mb-4">
                     <label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
@@ -207,7 +222,9 @@
         const successMessage = document.getElementById('success-message');
         const successText = document.getElementById('success-text');
 
-        // Register form elements (renamed from original to be specific)
+        // Register form elements
+        const registerNameInput = document.getElementById('register-name'); // NEW
+        const registerNameError = document.getElementById('register-name-error'); // NEW
         const registerEmailInput = document.getElementById('register-email');
         const registerPasswordInput = document.getElementById('register-password');
         const confirmPasswordInput = document.getElementById('confirm-password');
@@ -248,11 +265,46 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
         `;
 
-        // --- General Utility Functions ---
+        // --- Validation Functions ---
         
         /**
-         * Toggles the visibility of a password field and updates the toggle icon.
+         * Name validation: requires at least 2 characters, only letters and spaces.
          */
+        function validateName(name) {
+            // Regex: start/end of string, 2 or more (letters or spaces)
+            const nameRegex = /^[a-zA-Z\s]{2,}$/; 
+            return nameRegex.test(name.trim());
+        }
+
+        function validateEmail(email) {
+            return registerEmailInput.checkValidity();
+        }
+        function validatePassword(password) {
+            return passwordRules.map(rule => ({ ...rule, passed: rule.regex.test(password) }));
+        }
+        function isPasswordValid(ruleStatuses, password) {
+            return password.length > 0 && ruleStatuses.every(rule => rule.passed);
+        }
+        function validateConfirmPassword(password, confirm) {
+            return confirm.length > 0 && password === confirm;
+        }
+
+        // --- UI Utility Functions ---
+
+        function updatePasswordRulesUI(ruleStatuses) {
+            passwordValidationList.innerHTML = ruleStatuses.map(rule => {
+                const icon = rule.passed ? getCheckIcon() : getCrossIcon();
+                const textColor = rule.passed ? 'text-green-600' : 'text-gray-500';
+                
+                return `
+                    <li id="rule-${rule.id}" class="flex items-center transition duration-150 ${textColor}">
+                        ${icon}
+                        <span>${rule.text}</span>
+                    </li>
+                `;
+            }).join('');
+        }
+        
         function togglePasswordVisibility(inputId) {
             const input = document.getElementById(inputId);
             const iconSvg = document.getElementById(`toggle-icon-${inputId}`);
@@ -272,11 +324,8 @@
             input.focus();
         }
 
-        /**
-         * Displays a global success or error message.
-         */
         function displayMessage(message, isSuccess = true) {
-            successMessage.classList.add('hidden'); // Ensure success message is hidden
+            successMessage.classList.add('hidden');
             messageContainer.textContent = message;
             messageContainer.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
             if (isSuccess) {
@@ -286,9 +335,6 @@
             }
         }
 
-        /**
-         * Toggles between Login and Register forms.
-         */
         function switchForm(formType) {
             messageContainer.classList.add('hidden');
             successMessage.classList.add('hidden');
@@ -317,51 +363,21 @@
                 return;
             }
             
-            // Basic email format check for UX
             if (!loginEmailInput.checkValidity()) {
                 displayMessage("Login failed: Please ensure the email format is valid.", false);
                 return;
             }
 
-            // Simulate successful authentication
             displayMessage(`Login successful! Welcome back, ${email}.`, true);
             loginForm.reset();
             
-            // Show success message container
             messageContainer.classList.add('hidden');
             successText.textContent = `Login successful! Welcome back, ${email}.`;
             successMessage.classList.remove('hidden');
         }
 
 
-        // --- REGISTER FORM Logic (Preserved from original) ---
-        
-        function validateEmail(email) {
-            return registerEmailInput.checkValidity();
-        }
-        function validatePassword(password) {
-            return passwordRules.map(rule => ({ ...rule, passed: rule.regex.test(password) }));
-        }
-        function isPasswordValid(ruleStatuses, password) {
-            return password.length > 0 && ruleStatuses.every(rule => rule.passed);
-        }
-        function validateConfirmPassword(password, confirm) {
-            return confirm.length > 0 && password === confirm;
-        }
-
-        function updatePasswordRulesUI(ruleStatuses) {
-            passwordValidationList.innerHTML = ruleStatuses.map(rule => {
-                const icon = rule.passed ? getCheckIcon() : getCrossIcon();
-                const textColor = rule.passed ? 'text-green-600' : 'text-gray-500';
-                
-                return `
-                    <li id="rule-${rule.id}" class="flex items-center transition duration-150 ${textColor}">
-                        ${icon}
-                        <span>${rule.text}</span>
-                    </li>
-                `;
-            }).join('');
-        }
+        // --- REGISTER FORM Logic ---
         
         /**
          * Handles all input events for live validation feedback on the Register form.
@@ -369,6 +385,30 @@
         function handleRegisterInput() {
             let formIsValid = true;
             messageContainer.classList.add('hidden'); // Clear general error on input
+            
+            // 0. Name Validation (NEW)
+            const nameValue = registerNameInput.value.trim();
+            const isNameValid = validateName(nameValue);
+
+            if (nameValue.length > 0 && !isNameValid) {
+                registerNameInput.classList.remove('border-gray-300', 'border-green-500');
+                registerNameInput.classList.add('border-red-500');
+                registerNameError.classList.remove('hidden');
+                formIsValid = false;
+            } else if (nameValue.length > 0 && isNameValid) {
+                registerNameInput.classList.remove('border-red-500', 'border-gray-300');
+                registerNameInput.classList.add('border-green-500');
+                registerNameError.classList.add('hidden');
+            } else {
+                registerNameInput.classList.remove('border-red-500', 'border-green-500');
+                registerNameInput.classList.add('border-gray-300');
+                registerNameError.classList.add('hidden');
+            }
+            // If name is invalid, the form is invalid
+            if (!isNameValid && nameValue.length > 0) {
+                 formIsValid = false;
+            }
+
 
             // 1. Email Validation
             const emailValue = registerEmailInput.value.trim();
@@ -388,6 +428,7 @@
                 registerEmailInput.classList.add('border-gray-300');
                 registerEmailError.classList.add('hidden');
             }
+
 
             // 2. Password Validation
             const passwordValue = registerPasswordInput.value;
@@ -436,7 +477,7 @@
                 confirmPasswordError.classList.add('hidden');
             }
             
-            return formIsValid;
+            return formIsValid && isNameValid && isEmailValid && isPasswordMeetRules && isConfirmPasswordMatch;
         }
 
         function handleRegisterSubmit(event) {
@@ -471,6 +512,7 @@
             registerForm.addEventListener('submit', handleRegisterSubmit);
             
             // Attach register form live input handler
+            registerNameInput.addEventListener('input', handleRegisterInput); // NEW
             registerEmailInput.addEventListener('input', handleRegisterInput);
             registerPasswordInput.addEventListener('input', handleRegisterInput);
             confirmPasswordInput.addEventListener('input', handleRegisterInput);
