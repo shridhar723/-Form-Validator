@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Sign-Up Form Validator</title>
+    <title>Login & Register Validator</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,308 +17,398 @@
         .validation-icon {
             width: 1.25rem;
             height: 1.25rem;
+            flex-shrink: 0;
         }
-        /* Hide default number input arrows */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        /* Form toggle button styling */
+        .form-toggle-btn {
+            padding: 0.5rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+            background-color: #e5e7eb; /* Gray-200 */
+            color: #4b5563; /* Gray-600 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .form-toggle-btn.active {
+            background-color: #1e40af; /* Blue-800 */
+            color: white;
+            box-shadow: 0 6px 10px rgba(30, 64, 175, 0.3);
+            transform: translateY(-2px);
+        }
+        /* Animation for form containers */
+        .form-container {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
-    <script>
-        // Setup for canvas environment (mandatory but not used for client-side validation)
-        const __app_id = typeof __app_id !== 'undefined' ? __app_id : 'form-validator-app';
-        const __firebase_config = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-        const __initial_auth_token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : '';
-    </script>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <!-- Main Content Card -->
     <div class="w-full max-w-md bg-white p-8 md:p-10 rounded-xl shadow-2xl border border-gray-100">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Create Your Account</h1>
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">User Authentication</h1>
 
-        <!-- Form Start -->
-        <form id="signup-form" novalidate>
-
-            <!-- Global Error Message (Accessible via aria-live) -->
-            <div id="general-error-message" role="alert" aria-live="polite" class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm hidden transition-all duration-300">
-                Please fix the errors before submitting.
-            </div>
-
-            <!-- Email Field -->
-            <div class="mb-4">
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
-                    placeholder="you@example.com"
-                    required
-                    aria-describedby="email-error"
-                    oninput="handleInput()"
-                >
-                <p id="email-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Please enter a valid email format.</p>
-            </div>
-
-            <!-- Password Field -->
-            <div class="mb-4">
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <div class="relative">
-                    <input 
-                        type="password" 
-                        id="password" 
-                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 transition duration-150"
-                        required
-                        aria-describedby="password-rules password-error"
-                        oninput="handleInput()"
-                    >
-                    <!-- Password Visibility Toggle -->
-                    <button type="button" onclick="togglePasswordVisibility('password')" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700">
-                        <!-- Eye Icon SVG (Show/Hide) -->
-                        <svg id="toggle-icon-password" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.433 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                        </svg>
-                    </button>
-                </div>
-                <p id="password-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Password is too weak or does not meet all requirements.</p>
-
-                <!-- Password Rules Feedback -->
-                <div id="password-rules" class="mt-2 space-y-1 text-sm text-gray-600 p-3 bg-gray-50 rounded-lg">
-                    <p class="font-medium text-gray-700 mb-1">Password must contain:</p>
-                    <ul id="password-validation-list">
-                        <!-- Rules will be injected here by JS -->
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Confirm Password Field -->
-            <div class="mb-6">
-                <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                <div class="relative">
-                    <input 
-                        type="password" 
-                        id="confirm-password" 
-                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 transition duration-150"
-                        required
-                        aria-describedby="confirm-password-error"
-                        oninput="handleInput()"
-                    >
-                    <!-- Confirm Password Visibility Toggle -->
-                    <button type="button" onclick="togglePasswordVisibility('confirm-password')" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700">
-                        <!-- Eye Icon SVG (Show/Hide) -->
-                        <svg id="toggle-icon-confirm-password" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.433 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                        </svg>
-                    </button>
-                </div>
-                <p id="confirm-password-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Passwords do not match.</p>
-            </div>
-
-            <!-- Submit Button -->
-            <button 
-                type="submit" 
-                id="submit-button"
-                class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition duration-200"
-            >
-                Sign Up
-            </button>
-        </form>
-        <!-- Form End -->
-
-        <!-- Success Message (hidden initially) -->
-        <div id="success-message" role="alert" aria-live="assertive" class="hidden mt-6 p-4 bg-green-100 text-green-700 rounded-lg text-center font-medium">
-            <p>Registration Successful! You can now log in.</p>
+        <!-- Form Toggle Buttons -->
+        <div class="flex justify-center space-x-4 mb-8">
+            <button id="login-toggle" class="form-toggle-btn active" data-form-type="login">Login</button>
+            <button id="register-toggle" class="form-toggle-btn" data-form-type="register">Register</button>
         </div>
 
+        <!-- Global Message Container -->
+        <div id="message-container" role="alert" aria-live="polite" class="mb-4 p-3 rounded-lg text-sm hidden transition-all duration-300"></div>
+
+        <!-- ---------------------------------------------------- -->
+        <!-- 1. LOGIN FORM (Default Active) -->
+        <!-- ---------------------------------------------------- -->
+        <div id="login-form-container" class="form-container" data-form-type="login">
+             <h2 class="text-xl font-semibold text-gray-700 mb-4 text-center">Sign In</h2>
+            <form id="login-form" novalidate>
+                
+                <!-- Login Email Field -->
+                <div class="mb-4">
+                    <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="login-email" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                        placeholder="you@example.com"
+                        required
+                    >
+                </div>
+
+                <!-- Login Password Field -->
+                <div class="mb-6">
+                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input 
+                        type="password" 
+                        id="login-password" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                        required
+                    >
+                </div>
+
+                <!-- Submit Button -->
+                <button 
+                    type="submit" 
+                    id="login-submit-button"
+                    class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition duration-200"
+                >
+                    Login
+                </button>
+            </form>
+        </div>
+
+
+        <!-- ---------------------------------------------------- -->
+        <!-- 2. REGISTER FORM (Hidden by Default) -->
+        <!-- ---------------------------------------------------- -->
+        <div id="register-form-container" class="form-container hidden" data-form-type="register">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4 text-center">Create Account</h2>
+            <form id="register-form" novalidate>
+
+                <!-- Email Field (Register) -->
+                <div class="mb-4">
+                    <label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="register-email" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                        placeholder="you@example.com"
+                        required
+                        aria-describedby="register-email-error"
+                        oninput="handleRegisterInput()"
+                    >
+                    <p id="register-email-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Please enter a valid email format.</p>
+                </div>
+
+                <!-- Password Field (Register) -->
+                <div class="mb-4">
+                    <label for="register-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <input 
+                            type="password" 
+                            id="register-password" 
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 transition duration-150"
+                            required
+                            aria-describedby="register-password-rules register-password-error"
+                            oninput="handleRegisterInput()"
+                        >
+                        <!-- Password Visibility Toggle -->
+                        <button type="button" onclick="togglePasswordVisibility('register-password')" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700" aria-label="Toggle password visibility">
+                            <svg id="toggle-icon-register-password" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.433 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="register-password-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Password is too weak or does not meet all requirements.</p>
+
+                    <!-- Password Rules Feedback -->
+                    <div id="register-password-rules" class="mt-2 text-sm text-gray-600 p-3 bg-gray-50 rounded-lg">
+                        <p class="font-medium text-gray-700 mb-1">Password must contain:</p>
+                        <ul id="register-password-validation-list" class="space-y-1">
+                            <!-- Rules will be injected here by JS -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Confirm Password Field (Register) -->
+                <div class="mb-6">
+                    <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    <div class="relative">
+                        <input 
+                            type="password" 
+                            id="confirm-password" 
+                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 transition duration-150"
+                            required
+                            aria-describedby="confirm-password-error"
+                            oninput="handleRegisterInput()"
+                        >
+                        <!-- Confirm Password Visibility Toggle -->
+                        <button type="button" onclick="togglePasswordVisibility('confirm-password')" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700" aria-label="Toggle confirm password visibility">
+                            <svg id="toggle-icon-confirm-password" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.433 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="confirm-password-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Passwords do not match.</p>
+                </div>
+
+                <!-- Submit Button -->
+                <button 
+                    type="submit" 
+                    id="register-submit-button"
+                    class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-200"
+                >
+                    Sign Up
+                </button>
+            </form>
+        </div>
+        <!-- Success Message (hidden initially) - shared between both forms -->
+        <div id="success-message" role="alert" aria-live="assertive" class="hidden mt-6 p-4 bg-green-100 text-green-700 rounded-lg text-center font-medium">
+            <p id="success-text">Operation Successful!</p>
+        </div>
     </div>
 
     <script>
-        // DOM Elements
-        const form = document.getElementById('signup-form');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const confirmPasswordInput = document.getElementById('confirm-password');
-        const emailError = document.getElementById('email-error');
-        const passwordError = document.getElementById('password-error');
-        const confirmPasswordError = document.getElementById('confirm-password-error');
-        const passwordValidationList = document.getElementById('password-validation-list');
-        const generalError = document.getElementById('general-error-message');
+        // --- DOM Elements ---
+        const loginToggleBtn = document.getElementById('login-toggle');
+        const registerToggleBtn = document.getElementById('register-toggle');
+        const loginFormContainer = document.getElementById('login-form-container');
+        const registerFormContainer = document.getElementById('register-form-container');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const messageContainer = document.getElementById('message-container');
         const successMessage = document.getElementById('success-message');
+        const successText = document.getElementById('success-text');
 
-        // Regex for validation rules
+        // Register form elements (renamed from original to be specific)
+        const registerEmailInput = document.getElementById('register-email');
+        const registerPasswordInput = document.getElementById('register-password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        const registerEmailError = document.getElementById('register-email-error');
+        const registerPasswordError = document.getElementById('register-password-error');
+        const confirmPasswordError = document.getElementById('confirm-password-error');
+        const passwordValidationList = document.getElementById('register-password-validation-list');
+        
+        // Login form elements
+        const loginEmailInput = document.getElementById('login-email');
+        const loginPasswordInput = document.getElementById('login-password');
+
+        // Regex for validation rules (Registration only)
         const passwordRules = [
             { id: 'min-length', text: 'Minimum 8 characters', regex: /.{8,}/ },
             { id: 'uppercase', text: 'At least one uppercase letter (A-Z)', regex: /[A-Z]/ },
             { id: 'lowercase', text: 'At least one lowercase letter (a-z)', regex: /[a-z]/ },
             { id: 'digit', text: 'At least one digit (0-9)', regex: /[0-9]/ },
-            // Added special characters requested (!@#$%) and a few common others for better UX
-            { id: 'special-char', text: 'At least one special character (!@#$%)', regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/ }
+            { id: 'special-char', text: 'At least one special character (!@#$%)', regex: /[!@#$%]/ }
         ];
 
-        // --- Helper Functions for Icons ---
-
-        /**
-         * Returns an SVG for a checkmark (successful validation).
-         */
+        // --- Icon SVGs ---
         const getCheckIcon = () => `
             <svg class="validation-icon text-green-500 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
         `;
-
-        /**
-         * Returns an SVG for a cross (failed validation).
-         */
         const getCrossIcon = () => `
-            <svg class="validation-icon text-red-500 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="validation-icon text-gray-400 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
         `;
+        const getEyeSlashIcon = () => `
+             <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12c.355 1.18 1.05 2.222 1.935 3.125l.897-.897A9.267 9.267 0 0 1 12 11c3.153 0 5.86 2.05 7.155 4.902l.897.897c.712-.712 1.341-1.554 1.83-2.456a1.012 1.012 0 0 0 0-.639C20.577 7.51 16.64 4.5 12 4.5a10.293 10.293 0 0 0-4.004.821l.897.897ZM20.842 20.842A1.332 1.332 0 0 1 19.51 22.17a1.332 1.332 0 0 1-1.884 0l-15.01-15.01A1.332 1.332 0 0 1 .83 5.385 1.332 1.332 0 0 1 2.714 3.5Z" />
+        `;
+        const getEyeIcon = () => `
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.433 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        `;
 
-        // --- Validation Logic ---
-
-        /**
-         * Validates the email input value.
-         * @param {string} email - The email string to validate.
-         * @returns {boolean} True if the email is valid, false otherwise.
-         */
-        function validateEmail(email) {
-            // Basic HTML5 validation + check for emptiness
-            return email.trim() !== '' && emailInput.checkValidity();
-        }
-
-        /**
-         * Validates the password against all defined rules.
-         * @param {string} password - The password string to validate.
-         * @returns {Array<{id: string, text: string, passed: boolean}>} Array of rule statuses.
-         */
-        function validatePassword(password) {
-            return passwordRules.map(rule => ({
-                ...rule,
-                passed: rule.regex.test(password)
-            }));
-        }
-
-        /**
-         * Checks if all password rules have passed.
-         * @param {Array<{passed: boolean}>} ruleStatuses - The array of rule results.
-         * @returns {boolean} True if all rules passed.
-         */
-        function isPasswordValid(ruleStatuses) {
-            return ruleStatuses.every(rule => rule.passed);
-        }
-
-        /**
-         * Validates if the confirm password matches the main password.
-         * @param {string} password - The main password.
-         * @param {string} confirm - The confirm password.
-         * @returns {boolean} True if they match.
-         */
-        function validateConfirmPassword(password, confirm) {
-            return password === confirm && confirm.length > 0;
-        }
-
-        // --- UI Update Functions ---
-
-        /**
-         * Updates the UI for the password rules based on live validation results.
-         * @param {Array<{id: string, text: string, passed: boolean}>} ruleStatuses - Array of rule statuses.
-         */
-        function updatePasswordRulesUI(ruleStatuses) {
-            passwordValidationList.innerHTML = ruleStatuses.map(rule => `
-                <li id="rule-${rule.id}" class="flex items-center transition duration-150 ${rule.passed ? 'text-green-600' : 'text-red-500'}">
-                    <span class="mr-2">
-                        ${rule.passed ? getCheckIcon() : getCrossIcon()}
-                    </span>
-                    <span>${rule.text}</span>
-                </li>
-            `).join('');
-        }
+        // --- General Utility Functions ---
         
         /**
-         * Toggles the visibility of a password field.
-         * @param {string} inputId - The ID of the password input field.
+         * Toggles the visibility of a password field and updates the toggle icon.
          */
         function togglePasswordVisibility(inputId) {
             const input = document.getElementById(inputId);
-            const icon = document.getElementById(`toggle-icon-${inputId}`);
+            const iconSvg = document.getElementById(`toggle-icon-${inputId}`);
             
             const isPassword = input.type === 'password';
             input.type = isPassword ? 'text' : 'password';
 
-            // Update the icon (simple toggle placeholder for visibility)
-            // In a real app, you would swap the eye-slash and eye icon SVGs
-            icon.classList.toggle('text-gray-500', isPassword);
-            icon.classList.toggle('text-blue-600', !isPassword);
-
-            // Simple SVG swap (using stroke-width to simulate the slash)
             if (isPassword) {
-                // Show text: use stroke-width 1.5 (unslashed eye)
-                icon.setAttribute('stroke-width', '1.5');
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.433 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />`;
+                iconSvg.innerHTML = getEyeSlashIcon();
+                iconSvg.classList.add('text-blue-600');
+                iconSvg.classList.remove('text-gray-500');
             } else {
-                // Show password: use slightly thicker stroke (slashed eye - simulation)
-                // Using a simplified SVG for "eye-slash" for demonstration in a single file:
-                 icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12c.355 1.18 1.05 2.222 1.935 3.125l.897-.897A9.267 9.267 0 0 1 12 11c3.153 0 5.86 2.05 7.155 4.902l.897.897c.712-.712 1.341-1.554 1.83-2.456a1.012 1.012 0 0 0 0-.639C20.577 7.51 16.64 4.5 12 4.5a10.293 10.293 0 0 0-4.004.821l.897.897ZM20.842 20.842A1.332 1.332 0 0 1 19.51 22.17a1.332 1.332 0 0 1-1.884 0l-15.01-15.01A1.332 1.332 0 0 1 .83 5.385 1.332 1.332 0 0 1 2.714 3.5Z" />`;
+                iconSvg.innerHTML = getEyeIcon();
+                iconSvg.classList.remove('text-blue-600');
+                iconSvg.classList.add('text-gray-500');
             }
-
-            input.focus(); // Keep focus on the input after toggle
+            input.focus();
         }
 
-        // --- Main Handler ---
+        /**
+         * Displays a global success or error message.
+         */
+        function displayMessage(message, isSuccess = true) {
+            successMessage.classList.add('hidden'); // Ensure success message is hidden
+            messageContainer.textContent = message;
+            messageContainer.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+            if (isSuccess) {
+                messageContainer.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                messageContainer.classList.add('bg-red-100', 'text-red-700');
+            }
+        }
 
         /**
-         * Handles all input events for live validation feedback.
+         * Toggles between Login and Register forms.
          */
-        function handleInput() {
-            let formValid = true;
+        function switchForm(formType) {
+            messageContainer.classList.add('hidden');
+            successMessage.classList.add('hidden');
+            if (formType === 'login') {
+                loginFormContainer.classList.remove('hidden');
+                registerFormContainer.classList.add('hidden');
+                loginToggleBtn.classList.add('active');
+                registerToggleBtn.classList.remove('active');
+            } else {
+                loginFormContainer.classList.add('hidden');
+                registerFormContainer.classList.remove('hidden');
+                loginToggleBtn.classList.remove('active');
+                registerToggleBtn.classList.add('active');
+            }
+        }
+        
+        // --- LOGIN FORM Logic ---
+
+        function handleLoginSubmit(event) {
+            event.preventDefault();
+            const email = loginEmailInput.value.trim();
+            const password = loginPasswordInput.value.trim();
+
+            if (email === '' || password === '') {
+                displayMessage("Login failed: Please enter both email and password.", false);
+                return;
+            }
+            
+            // Basic email format check for UX
+            if (!loginEmailInput.checkValidity()) {
+                displayMessage("Login failed: Please ensure the email format is valid.", false);
+                return;
+            }
+
+            // Simulate successful authentication
+            displayMessage(`Login successful! Welcome back, ${email}.`, true);
+            loginForm.reset();
+            
+            // Show success message container
+            messageContainer.classList.add('hidden');
+            successText.textContent = `Login successful! Welcome back, ${email}.`;
+            successMessage.classList.remove('hidden');
+        }
+
+
+        // --- REGISTER FORM Logic (Preserved from original) ---
+        
+        function validateEmail(email) {
+            return registerEmailInput.checkValidity();
+        }
+        function validatePassword(password) {
+            return passwordRules.map(rule => ({ ...rule, passed: rule.regex.test(password) }));
+        }
+        function isPasswordValid(ruleStatuses, password) {
+            return password.length > 0 && ruleStatuses.every(rule => rule.passed);
+        }
+        function validateConfirmPassword(password, confirm) {
+            return confirm.length > 0 && password === confirm;
+        }
+
+        function updatePasswordRulesUI(ruleStatuses) {
+            passwordValidationList.innerHTML = ruleStatuses.map(rule => {
+                const icon = rule.passed ? getCheckIcon() : getCrossIcon();
+                const textColor = rule.passed ? 'text-green-600' : 'text-gray-500';
+                
+                return `
+                    <li id="rule-${rule.id}" class="flex items-center transition duration-150 ${textColor}">
+                        ${icon}
+                        <span>${rule.text}</span>
+                    </li>
+                `;
+            }).join('');
+        }
+        
+        /**
+         * Handles all input events for live validation feedback on the Register form.
+         */
+        function handleRegisterInput() {
+            let formIsValid = true;
+            messageContainer.classList.add('hidden'); // Clear general error on input
 
             // 1. Email Validation
-            const emailValue = emailInput.value;
+            const emailValue = registerEmailInput.value.trim();
             const isEmailValid = validateEmail(emailValue);
 
             if (emailValue.length > 0 && !isEmailValid) {
-                emailInput.classList.remove('border-gray-300', 'border-green-500');
-                emailInput.classList.add('border-red-500');
-                emailError.classList.remove('hidden');
-                formValid = false;
+                registerEmailInput.classList.remove('border-gray-300', 'border-green-500');
+                registerEmailInput.classList.add('border-red-500');
+                registerEmailError.classList.remove('hidden');
+                formIsValid = false;
+            } else if (emailValue.length > 0 && isEmailValid) {
+                 registerEmailInput.classList.remove('border-red-500', 'border-gray-300');
+                registerEmailInput.classList.add('border-green-500');
+                registerEmailError.classList.add('hidden');
             } else {
-                emailInput.classList.remove('border-red-500');
-                emailError.classList.add('hidden');
-                if (emailValue.length > 0) {
-                    emailInput.classList.add('border-green-500');
-                } else {
-                    emailInput.classList.remove('border-green-500', 'border-red-500');
-                    emailInput.classList.add('border-gray-300');
-                }
+                registerEmailInput.classList.remove('border-red-500', 'border-green-500');
+                registerEmailInput.classList.add('border-gray-300');
+                registerEmailError.classList.add('hidden');
             }
-
 
             // 2. Password Validation
-            const passwordValue = passwordInput.value;
+            const passwordValue = registerPasswordInput.value;
             const passwordRuleStatuses = validatePassword(passwordValue);
             updatePasswordRulesUI(passwordRuleStatuses);
-            const isPasswordMeetRules = isPasswordValid(passwordRuleStatuses);
+            const isPasswordMeetRules = isPasswordValid(passwordRuleStatuses, passwordValue);
             
             if (passwordValue.length > 0 && !isPasswordMeetRules) {
-                passwordInput.classList.remove('border-gray-300', 'border-green-500');
-                passwordInput.classList.add('border-red-500');
-                passwordError.classList.remove('hidden');
-                formValid = false;
+                registerPasswordInput.classList.remove('border-gray-300', 'border-green-500');
+                registerPasswordInput.classList.add('border-red-500');
+                registerPasswordError.classList.remove('hidden');
+                formIsValid = false;
+            } else if (passwordValue.length > 0 && isPasswordMeetRules) {
+                registerPasswordInput.classList.remove('border-red-500', 'border-gray-300');
+                registerPasswordInput.classList.add('border-green-500');
+                registerPasswordError.classList.add('hidden');
             } else {
-                passwordInput.classList.remove('border-red-500');
-                passwordError.classList.add('hidden');
-                if (passwordValue.length > 0) {
-                    passwordInput.classList.add('border-green-500');
-                } else {
-                    passwordInput.classList.remove('border-green-500', 'border-red-500');
-                    passwordInput.classList.add('border-gray-300');
-                }
+                registerPasswordInput.classList.remove('border-red-500', 'border-green-500');
+                registerPasswordInput.classList.add('border-gray-300');
+                registerPasswordError.classList.add('hidden');
             }
-
 
             // 3. Confirm Password Validation
             const confirmPasswordValue = confirmPasswordInput.value;
@@ -327,67 +417,67 @@
             if (confirmPasswordValue.length > 0 && !isConfirmPasswordMatch) {
                 confirmPasswordInput.classList.remove('border-gray-300', 'border-green-500');
                 confirmPasswordInput.classList.add('border-red-500');
+                confirmPasswordError.textContent = "Passwords do not match.";
                 confirmPasswordError.classList.remove('hidden');
-                formValid = false;
-            } else {
-                confirmPasswordInput.classList.remove('border-red-500');
+                formIsValid = false;
+            } else if (confirmPasswordValue.length > 0 && isConfirmPasswordMatch) {
+                confirmPasswordInput.classList.remove('border-red-500', 'border-gray-300');
+                confirmPasswordInput.classList.add('border-green-500');
                 confirmPasswordError.classList.add('hidden');
-                if (confirmPasswordValue.length > 0 && isConfirmPasswordMatch) {
-                    confirmPasswordInput.classList.add('border-green-500');
-                } else {
-                    confirmPasswordInput.classList.remove('border-green-500', 'border-red-500');
-                    confirmPasswordInput.classList.add('border-gray-300');
-                }
-            }
-
-            // Hide general error if all primary checks are passing visually
-            if (isEmailValid && isPasswordMeetRules && isConfirmPasswordMatch && emailValue.length > 0 && passwordValue.length > 0 && confirmPasswordValue.length > 0) {
-                 generalError.classList.add('hidden');
+            } else if (passwordValue.length > 0 && confirmPasswordValue.length === 0) {
+                 confirmPasswordInput.classList.remove('border-red-500', 'border-green-500');
+                confirmPasswordInput.classList.add('border-gray-300');
+                confirmPasswordError.textContent = "Please confirm your password.";
+                confirmPasswordError.classList.remove('hidden');
+                formIsValid = false;
+            } else {
+                confirmPasswordInput.classList.remove('border-red-500', 'border-green-500');
+                confirmPasswordInput.classList.add('border-gray-300');
+                confirmPasswordError.classList.add('hidden');
             }
             
-            return formValid && isEmailValid && isPasswordMeetRules && isConfirmPasswordMatch;
+            return formIsValid;
         }
 
-        /**
-         * Handles the form submission.
-         */
-        function handleSubmit(event) {
+        function handleRegisterSubmit(event) {
             event.preventDefault();
-            const formIsValid = handleInput(); // Re-run all validation checks one last time
+            const formIsValid = handleRegisterInput(); // Re-run all validation checks
 
             if (!formIsValid) {
-                // Show general error message for accessibility (aria-live region)
-                generalError.textContent = "Submission failed: Please check and correct the fields marked in red.";
-                generalError.classList.remove('hidden');
-                // Ensure the form doesn't actually submit
+                displayMessage("Submission failed: Please check and correct the fields marked in red.", false);
                 return false;
             } else {
-                // SUCCESS
-                generalError.classList.add('hidden');
-                form.classList.add('hidden');
+                displayMessage("Registration successful! You can now log in.", true);
+                registerForm.reset();
                 
-                // Display success message
+                // Show success message container
+                messageContainer.classList.add('hidden');
+                successText.textContent = `Registration successful! You can now log in.`;
                 successMessage.classList.remove('hidden');
-                
-                console.log('Form Submitted Successfully!');
-                console.log('Email:', emailInput.value);
-                // NOTE: In a real app, you would securely send the data to a server.
+
+                // Optional: switch back to login form after successful registration
+                setTimeout(() => switchForm('login'), 2000);
             }
         }
 
         // --- Initialization ---
         window.onload = () => {
-            // Attach the submit handler
-            form.addEventListener('submit', handleSubmit);
+            // Attach toggle handlers
+            loginToggleBtn.addEventListener('click', () => switchForm('login'));
+            registerToggleBtn.addEventListener('click', () => switchForm('register'));
             
-            // Initial render of validation rules
+            // Attach form submission handlers
+            loginForm.addEventListener('submit', handleLoginSubmit);
+            registerForm.addEventListener('submit', handleRegisterSubmit);
+            
+            // Attach register form live input handler
+            registerEmailInput.addEventListener('input', handleRegisterInput);
+            registerPasswordInput.addEventListener('input', handleRegisterInput);
+            confirmPasswordInput.addEventListener('input', handleRegisterInput);
+
+            // Initial render of validation rules list
             const initialRules = validatePassword('');
             updatePasswordRulesUI(initialRules);
-            
-            // Add input listeners to all fields to handle validation live
-            emailInput.addEventListener('input', handleInput);
-            passwordInput.addEventListener('input', handleInput);
-            confirmPasswordInput.addEventListener('input', handleInput);
         };
     </script>
 </body>
