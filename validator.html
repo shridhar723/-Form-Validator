@@ -1,10 +1,9 @@
-<!DOCTYPE null>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login & Register Validator</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom font for a modern look */
@@ -48,27 +47,20 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <!-- Main Content Card -->
     <div class="w-full max-w-md bg-white p-8 md:p-10 rounded-xl shadow-2xl border border-gray-100">
         <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">User Authentication</h1>
 
-        <!-- Form Toggle Buttons -->
         <div class="flex justify-center space-x-4 mb-8">
             <button id="login-toggle" class="form-toggle-btn active" data-form-type="login">Login</button>
             <button id="register-toggle" class="form-toggle-btn" data-form-type="register">Register</button>
         </div>
 
-        <!-- Global Message Container -->
         <div id="message-container" role="alert" aria-live="polite" class="mb-4 p-3 rounded-lg text-sm hidden transition-all duration-300"></div>
 
-        <!-- ---------------------------------------------------- -->
-        <!-- 1. LOGIN FORM (Default Active) -->
-        <!-- ---------------------------------------------------- -->
         <div id="login-form-container" class="form-container" data-form-type="login">
              <h2 class="text-xl font-semibold text-gray-700 mb-4 text-center">Sign In</h2>
             <form id="login-form" novalidate>
                 
-                <!-- Login Email Field -->
                 <div class="mb-4">
                     <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                     <input 
@@ -80,7 +72,6 @@
                     >
                 </div>
 
-                <!-- Login Password Field -->
                 <div class="mb-6">
                     <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input 
@@ -91,7 +82,6 @@
                     >
                 </div>
 
-                <!-- Submit Button -->
                 <button 
                     type="submit" 
                     id="login-submit-button"
@@ -103,14 +93,10 @@
         </div>
 
 
-        <!-- ---------------------------------------------------- -->
-        <!-- 2. REGISTER FORM (Hidden by Default) -->
-        <!-- ---------------------------------------------------- -->
         <div id="register-form-container" class="form-container hidden" data-form-type="register">
             <h2 class="text-xl font-semibold text-gray-700 mb-4 text-center">Create Account</h2>
             <form id="register-form" novalidate>
                 
-                <!-- Full Name Field (NEW) -->
                 <div class="mb-4">
                     <label for="register-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                     <input 
@@ -125,7 +111,6 @@
                     <p id="register-name-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Name must be at least 2 letters and contain only letters and spaces.</p>
                 </div>
                 
-                <!-- Email Field (Register) -->
                 <div class="mb-4">
                     <label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                     <input 
@@ -140,7 +125,6 @@
                     <p id="register-email-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Please enter a valid email format.</p>
                 </div>
 
-                <!-- Password Field (Register) -->
                 <div class="mb-4">
                     <label for="register-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <div class="relative">
@@ -152,7 +136,6 @@
                             aria-describedby="register-password-rules register-password-error"
                             oninput="handleRegisterInput()"
                         >
-                        <!-- Password Visibility Toggle -->
                         <button type="button" onclick="togglePasswordVisibility('register-password')" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700" aria-label="Toggle password visibility">
                             <svg id="toggle-icon-register-password" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.433 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
@@ -162,16 +145,13 @@
                     </div>
                     <p id="register-password-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Password is too weak or does not meet all requirements.</p>
 
-                    <!-- Password Rules Feedback -->
                     <div id="register-password-rules" class="mt-2 text-sm text-gray-600 p-3 bg-gray-50 rounded-lg">
                         <p class="font-medium text-gray-700 mb-1">Password must contain:</p>
                         <ul id="register-password-validation-list" class="space-y-1">
-                            <!-- Rules will be injected here by JS -->
-                        </ul>
+                            </ul>
                     </div>
                 </div>
 
-                <!-- Confirm Password Field (Register) -->
                 <div class="mb-6">
                     <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
                     <div class="relative">
@@ -183,7 +163,6 @@
                             aria-describedby="confirm-password-error"
                             oninput="handleRegisterInput()"
                         >
-                        <!-- Confirm Password Visibility Toggle -->
                         <button type="button" onclick="togglePasswordVisibility('confirm-password')" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700" aria-label="Toggle confirm password visibility">
                             <svg id="toggle-icon-confirm-password" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.433 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
@@ -194,7 +173,6 @@
                     <p id="confirm-password-error" class="text-sm text-red-500 mt-1 hidden" role="alert">Passwords do not match.</p>
                 </div>
 
-                <!-- Submit Button -->
                 <button 
                     type="submit" 
                     id="register-submit-button"
@@ -204,7 +182,6 @@
                 </button>
             </form>
         </div>
-        <!-- Success Message (hidden initially) - shared between both forms -->
         <div id="success-message" role="alert" aria-live="assertive" class="hidden mt-6 p-4 bg-green-100 text-green-700 rounded-lg text-center font-medium">
             <p id="success-text">Operation Successful!</p>
         </div>
@@ -223,8 +200,8 @@
         const successText = document.getElementById('success-text');
 
         // Register form elements
-        const registerNameInput = document.getElementById('register-name'); // NEW
-        const registerNameError = document.getElementById('register-name-error'); // NEW
+        const registerNameInput = document.getElementById('register-name'); 
+        const registerNameError = document.getElementById('register-name-error'); 
         const registerEmailInput = document.getElementById('register-email');
         const registerPasswordInput = document.getElementById('register-password');
         const confirmPasswordInput = document.getElementById('confirm-password');
@@ -386,7 +363,7 @@
             let formIsValid = true;
             messageContainer.classList.add('hidden'); // Clear general error on input
             
-            // 0. Name Validation (NEW)
+            // 0. Name Validation
             const nameValue = registerNameInput.value.trim();
             const isNameValid = validateName(nameValue);
 
@@ -512,7 +489,7 @@
             registerForm.addEventListener('submit', handleRegisterSubmit);
             
             // Attach register form live input handler
-            registerNameInput.addEventListener('input', handleRegisterInput); // NEW
+            registerNameInput.addEventListener('input', handleRegisterInput);
             registerEmailInput.addEventListener('input', handleRegisterInput);
             registerPasswordInput.addEventListener('input', handleRegisterInput);
             confirmPasswordInput.addEventListener('input', handleRegisterInput);
